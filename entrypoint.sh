@@ -60,7 +60,7 @@ if ! flyctl status --app "$app"; then
   cp "$config" "$config.bak"
   set -f
   # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl launch --no-deploy --copy-config --name "$app" $image_arg --region "$region" --org "$org" ${build_args} ${build_secrets} $INPUT_LAUNCH_OPTIONS
+  IFS=' ' flyctl launch --no-deploy --config "$config" --name "$app" $image_arg --region "$region" --org "$org" ${build_args} ${build_secrets} $INPUT_LAUNCH_OPTIONS
   set +f
   # Restore the original config file
   cp "$config.bak" "$config"
