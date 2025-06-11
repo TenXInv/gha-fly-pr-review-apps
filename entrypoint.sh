@@ -26,6 +26,7 @@ config="${INPUT_CONFIG:-fly.toml}"
 image_arg=""
 build_args=""
 build_secrets=""
+env_vars=""
 
 if ! echo "$app" | grep "$PR_NUMBER"; then
   echo "For safety, this action requires the app's name to contain the PR number."
@@ -70,6 +71,12 @@ if [ -n "$INPUT_SECRETS" ]; then
   echo "$INPUT_SECRETS" | tr " " "\n" | flyctl secrets import --app "$app"
 fi
 
+if [ -n "$INPUT_ENV_VARS" ]; then
+  for ENV_VAR in $(echo "$INPUT_ENV_VARS" | tr " " "\n"); do
+    env_vars="$env_vars --env ${ENV_VAR}"
+  done
+fi
+
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
   flyctl postgres attach "$INPUT_POSTGRES" --app "$app" || true
@@ -87,6 +94,7 @@ if [ -n "$INPUT_VMSIZE" ]; then
     --ha="$INPUT_HA" \
     ${build_args} \
     ${build_secrets} \
+    ${env_vars} \
     --vm-size "$INPUT_VMSIZE" \
     $INPUT_DEPLOY_OPTIONS
 else
@@ -98,6 +106,7 @@ else
     --ha="$INPUT_HA" \
     ${build_args} \
     ${build_secrets} \
+    ${env_vars} \
     --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus "$INPUT_CPU" --vm-memory "$INPUT_MEMORY" \
     $INPUT_DEPLOY_OPTIONS
 fi
