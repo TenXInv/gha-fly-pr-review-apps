@@ -87,13 +87,15 @@ else
 fi
 set +f
 
-# Make some info available to the GitHub workflow.
-flyctl status --app "$app" --json >status.json
-hostname=$(jq -r .Hostname status.json)
-appid=$(jq -r .ID status.json)
-{
-  echo "hostname=$hostname"
-  echo "url=https://$hostname"
-  echo "id=$appid"
-  echo "name=$app"
-} >>"$GITHUB_OUTPUT"
+# If requested, make some info available to the GitHub workflow.
+if [ "$INPUT_SET_GITHUB_OUTPUT" = "true" ]; then
+  flyctl status --app "$app" --json >status.json
+  hostname=$(jq -r .Hostname status.json)
+  appid=$(jq -r .ID status.json)
+  {
+    echo "hostname=$hostname"
+    echo "url=https://$hostname"
+    echo "id=$appid"
+    echo "name=$app"
+  } >>"$GITHUB_OUTPUT"
+fi
