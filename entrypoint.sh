@@ -80,10 +80,26 @@ echo "Contents of config $config file: " && cat "$config"
 set -f
 if [ -n "$INPUT_VMSIZE" ]; then
   # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl deploy --config "$config" --app "$app" --regions "$region" $image_arg --strategy immediate --ha="$INPUT_HA" ${build_args} ${build_secrets} --vm-size "$INPUT_VMSIZE" $INPUT_DEPLOY_OPTIONS
+  IFS=' ' flyctl deploy --config "$config" --app "$app" \
+    --regions "$region" \
+    $image_arg \
+    --strategy immediate \
+    --ha="$INPUT_HA" \
+    ${build_args} \
+    ${build_secrets} \
+    --vm-size "$INPUT_VMSIZE" \
+    $INPUT_DEPLOY_OPTIONS
 else
   # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl deploy --config "$config" --app "$app" --regions "$region" $image_arg --strategy immediate --ha="$INPUT_HA" ${build_args} ${build_secrets} --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus "$INPUT_CPU" --vm-memory "$INPUT_MEMORY" $INPUT_DEPLOY_OPTIONS
+  IFS=' ' flyctl deploy --config "$config" --app "$app" \
+    --regions "$region" \
+    $image_arg \
+    --strategy immediate \
+    --ha="$INPUT_HA" \
+    ${build_args} \
+    ${build_secrets} \
+    --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus "$INPUT_CPU" --vm-memory "$INPUT_MEMORY" \
+    $INPUT_DEPLOY_OPTIONS
 fi
 set +f
 
