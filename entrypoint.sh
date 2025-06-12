@@ -122,7 +122,7 @@ flyctl status --app "$app" --json >status.json
 appid=$(jq -r .ID status.json)
 
 if [ -n "$INPUT_FLYCAST_INTO_ORG" ]; then
-  org_contains_flycast="$(flyctl ips list --app "$app" -j | jq -r ".[].Network.Organization.Slug | contains(\"${INPUT_FLYCAST_INTO_ORG}\")")"
+  org_contains_flycast="$(flyctl ips list --app "$app" -j | jq -r "[ .[].Network.Organization.Slug ] | any(index(\"${INPUT_FLYCAST_INTO_ORG}\"))")"
 
   if [ "$org_contains_flycast" = "false" ]; then
     flyctl ips allocate-v6 --app "${app}" \
