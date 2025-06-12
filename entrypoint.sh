@@ -59,10 +59,19 @@ fi
 if ! flyctl status --app "$app"; then
   # Backup the original config file since 'flyctl launch' messes up the [build.args] section
   cp "$config" "$config.bak"
-  set -f
+
   # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl launch --no-deploy --config "$config" --copy-config --name "$app" $image_arg --region "$region" --org "$org" ${build_args} ${build_secrets} $INPUT_LAUNCH_OPTIONS
-  set +f
+  set -f &&
+    IFS=' ' flyctl launch --name "$app" --config "$config" --copy-config \
+      --no-deploy \
+      --region "$region" \
+      --org "$org" \
+      ${image_arg} \
+      ${build_args} \
+      ${build_secrets} \
+      $INPUT_LAUNCH_OPTIONS &&
+    set +f
+
   # Restore the original config file
   cp "$config.bak" "$config"
 fi
