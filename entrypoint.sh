@@ -59,10 +59,19 @@ fi
 if ! flyctl status --app "$app"; then
   # Backup the original config file since 'flyctl launch' messes up the [build.args] section
   cp "$config" "$config.bak"
-  set -f
+
   # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl launch --no-deploy --config "$config" --copy-config --name "$app" $image_arg --region "$region" --org "$org" ${build_args} ${build_secrets} $INPUT_LAUNCH_OPTIONS
-  set +f
+  set -f &&
+    IFS=' ' flyctl launch --name "$app" --config "$config" --copy-config \
+      --no-deploy \
+      --region "$region" \
+      --org "$org" \
+      ${image_arg} \
+      ${build_args} \
+      ${build_secrets} \
+      $INPUT_LAUNCH_OPTIONS &&
+    set +f
+
   # Restore the original config file
   cp "$config.bak" "$config"
 fi
@@ -79,48 +88,58 @@ fi
 
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
-  flyctl postgres attach "$INPUT_POSTGRES" --app "$app" || true
+  db_name=""
+  [ -n "$INPUT_POSTGRES_DB_NAME" ] && db_name="--database-name ${INPUT_POSTGRES_DB_NAME}"
+  # shellcheck disable=SC2086 # we want word splitting
+  flyctl postgres attach "$INPUT_POSTGRES" --app "$app" --yes ${db_name} || true
 fi
 
 # Trigger the deploy of the new version.
 echo "Contents of config $config file: " && cat "$config"
-set -f
-if [ -n "$INPUT_VMSIZE" ]; then
-  # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl deploy --config "$config" --app "$app" \
-    --regions "$region" \
-    $image_arg \
-    --strategy immediate \
-    --ha="$INPUT_HA" \
-    ${build_args} \
-    ${build_secrets} \
-    ${env_vars} \
-    --vm-size "$INPUT_VMSIZE" \
-    $INPUT_DEPLOY_OPTIONS
-else
-  # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl deploy --config "$config" --app "$app" \
-    --regions "$region" \
-    $image_arg \
-    --strategy immediate \
-    --ha="$INPUT_HA" \
-    ${build_args} \
-    ${build_secrets} \
-    ${env_vars} \
-    --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus "$INPUT_CPU" --vm-memory "$INPUT_MEMORY" \
-    $INPUT_DEPLOY_OPTIONS
-fi
-set +f
 
-# If requested, make some info available to the GitHub workflow.
-if [ "$INPUT_SET_GITHUB_OUTPUT" = "true" ]; then
-  flyctl status --app "$app" --json >status.json
-  hostname=$(jq -r .Hostname status.json)
-  appid=$(jq -r .ID status.json)
-  {
-    echo "hostname=$hostname"
-    echo "url=https://$hostname"
-    echo "id=$appid"
-    echo "name=$app"
-  } >>"$GITHUB_OUTPUT"
+deploy_options=$INPUT_DEPLOY_OPTIONS
+if [ "$INPUT_PRIVATE_APP" = "true" ]; then
+  deploy_options="${deploy_options} --no-public-ips"
 fi
+
+vm_sizing_options="--vm-cpu-kind ${INPUT_CPUKIND} --vm-cpus ${INPUT_CPU} --vm-memory ${INPUT_MEMORY}"
+[ -n "$INPUT_VMSIZE" ] && vm_sizing_options="--vm-size ${INPUT_VMSIZE}"
+# shellcheck disable=SC2086 # we want word splitting
+set -f &&
+  IFS=' ' flyctl deploy --config "$config" --app "$app" \
+    --regions "$region" \
+    $image_arg \
+    --strategy immediate \
+    --ha="$INPUT_HA" \
+    ${build_args} \
+    ${build_secrets} \
+    ${env_vars} \
+    ${vm_sizing_options} \
+    ${deploy_options} &&
+  set +f
+
+flyctl status --app "$app" --json >status.json
+appid=$(jq -r .ID status.json)
+
+if [ -n "$INPUT_FLYCAST_INTO_ORG" ]; then
+  org_contains_flycast="$(flyctl ips list --app "$app" -j | jq -r "[ .[].Network.Organization.Slug ] | any(index(\"${INPUT_FLYCAST_INTO_ORG}\"))")"
+
+  if [ "$org_contains_flycast" = "false" ]; then
+    flyctl ips allocate-v6 --app "${app}" \
+      --private \
+      --org "${INPUT_FLYCAST_INTO_ORG}"
+  fi
+
+  hostname="${app}.flycast"
+  url="http://${hostname}"
+else
+  hostname="$(jq -r .Hostname status.json)"
+  url="https://${hostname}"
+fi
+
+{
+  echo "hostname=$hostname"
+  echo "url=$url"
+  echo "id=$appid"
+  echo "name=$app"
+} >>"$GITHUB_OUTPUT"

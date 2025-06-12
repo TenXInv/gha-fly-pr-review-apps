@@ -26,6 +26,8 @@ inputs:
     description: path to a directory containing a fly.toml to clone
   postgres:
     description: Optionally attach the app to a pre-existing Postgres cluster on Fly
+  postgres_db_name:
+    description: Optionally specify the name of the existing Postgres DB to attach to
   secrets:
     description: Secrets to be set on the app at runtime. Separate multiple secrets with a space
   env_vars:
@@ -34,20 +36,22 @@ inputs:
     description: Set app VM to a named size, eg. shared-cpu-1x, dedicated-cpu-1x, dedicated-cpu-2x etc. Takes precedence over cpu, cpu kind, and memory inputs.
   cpu:
     description: Set app VM CPU (defaults to 1 cpu)
-    default: 1
+    default: "1"
   cpukind:
     description: Set app VM CPU kind - shared or performance. (defaults to shared)
     default: shared
   memory:
     description: Set app VM memory in megabytes (defaults to 256 megabytes)
-    default: 256
+    default: "1024"
   ha:
     description: Create spare machines that increases app availability (default false)
-    default: false
+    default: "false"
+  private_app:
+    description: If true `--no-public-ips` is appended to `deploy_options` (default false)
+    default: "false"
   launch_options:
     description: Additional options to pass to the Fly launch command at creation
   deploy_options:
     description: If specified, attaches additional options to fly deploy command
-  set_github_output:
-    description: If true, GitHub Output is updated to include the deployed app URL (along with app metadata)
-    default: "true"
+  flycast_into_org:
+    description: If specified, organization to flycast the app into
