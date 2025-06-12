@@ -93,9 +93,10 @@ fi
 
 # Trigger the deploy of the new version.
 echo "Contents of config $config file: " && cat "$config"
-set -f
-if [ -n "$INPUT_VMSIZE" ]; then
-  # shellcheck disable=SC2086 # we want word splitting
+vm_sizing_options="--vm-cpu-kind ${INPUT_CPUKIND} --vm-cpus ${INPUT_CPU} --vm-memory ${INPUT_MEMORY}"
+[ -n "$INPUT_VMSIZE" ] && vm_sizing_options="--vm-size ${INPUT_VMSIZE}"
+# shellcheck disable=SC2086 # we want word splitting
+set -f &&
   IFS=' ' flyctl deploy --config "$config" --app "$app" \
     --regions "$region" \
     $image_arg \
@@ -104,22 +105,9 @@ if [ -n "$INPUT_VMSIZE" ]; then
     ${build_args} \
     ${build_secrets} \
     ${env_vars} \
-    --vm-size "$INPUT_VMSIZE" \
-    $INPUT_DEPLOY_OPTIONS
-else
-  # shellcheck disable=SC2086 # we want word splitting
-  IFS=' ' flyctl deploy --config "$config" --app "$app" \
-    --regions "$region" \
-    $image_arg \
-    --strategy immediate \
-    --ha="$INPUT_HA" \
-    ${build_args} \
-    ${build_secrets} \
-    ${env_vars} \
-    --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus "$INPUT_CPU" --vm-memory "$INPUT_MEMORY" \
-    $INPUT_DEPLOY_OPTIONS
-fi
-set +f
+    ${vm_sizing_options} \
+    $INPUT_DEPLOY_OPTIONS &&
+  set +f
 
 # If requested, make some info available to the GitHub workflow.
 if [ "$INPUT_SET_GITHUB_OUTPUT" = "true" ]; then
