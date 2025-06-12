@@ -53,6 +53,5 @@ inputs:
     description: Additional options to pass to the Fly launch command at creation
   deploy_options:
     description: If specified, attaches additional options to fly deploy command
-  set_github_output:
-    description: If true, GitHub Output is updated to include the deployed app URL (along with app metadata)
-    default: "true"
+  flycast_into_org:
+    description: If specified, organization to flycast the app into

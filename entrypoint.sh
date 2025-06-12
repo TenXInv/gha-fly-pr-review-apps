@@ -118,15 +118,28 @@ set -f &&
     ${deploy_options} &&
   set +f
 
-# If requested, make some info available to the GitHub workflow.
-if [ "$INPUT_SET_GITHUB_OUTPUT" = "true" ]; then
-  flyctl status --app "$app" --json >status.json
-  hostname=$(jq -r .Hostname status.json)
-  appid=$(jq -r .ID status.json)
-  {
-    echo "hostname=$hostname"
-    echo "url=https://$hostname"
-    echo "id=$appid"
-    echo "name=$app"
-  } >>"$GITHUB_OUTPUT"
+flyctl status --app "$app" --json >status.json
+appid=$(jq -r .ID status.json)
+
+if [ -n "$INPUT_FLYCAST_INTO_ORG" ]; then
+  org_contains_flycast="$(flyctl ips list --app "$app" -j | jq -r ".[].Network.Organization.Slug | contains(\"${INPUT_FLYCAST_INTO_ORG}\")")"
+
+  if [ "$org_contains_flycast" = "false" ]; then
+    flyctl ips allocate-v6 --app "${app}" \
+      --private \
+      --org "${INPUT_FLYCAST_INTO_ORG}"
+  fi
+
+  hostname="${app}.flycast"
+  url="http://${hostname}"
+else
+  hostname="$(jq -r .Hostname status.json)"
+  url="https://${hostname}"
 fi
+
+{
+  echo "hostname=$hostname"
+  echo "url=$url"
+  echo "id=$appid"
+  echo "name=$app"
+} >>"$GITHUB_OUTPUT"
