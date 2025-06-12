@@ -96,6 +96,12 @@ fi
 
 # Trigger the deploy of the new version.
 echo "Contents of config $config file: " && cat "$config"
+
+deploy_options=$INPUT_DEPLOY_OPTIONS
+if [ "$INPUT_PRIVATE_APP" = "true" ]; then
+  deploy_options="${deploy_options} --no-public-ips"
+fi
+
 vm_sizing_options="--vm-cpu-kind ${INPUT_CPUKIND} --vm-cpus ${INPUT_CPU} --vm-memory ${INPUT_MEMORY}"
 [ -n "$INPUT_VMSIZE" ] && vm_sizing_options="--vm-size ${INPUT_VMSIZE}"
 # shellcheck disable=SC2086 # we want word splitting
@@ -109,7 +115,7 @@ set -f &&
     ${build_secrets} \
     ${env_vars} \
     ${vm_sizing_options} \
-    $INPUT_DEPLOY_OPTIONS &&
+    ${deploy_options} &&
   set +f
 
 # If requested, make some info available to the GitHub workflow.

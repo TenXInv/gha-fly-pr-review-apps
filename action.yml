@@ -46,6 +46,9 @@ inputs:
   ha:
     description: Create spare machines that increases app availability (default false)
     default: "false"
+  private_app:
+    description: If true `--no-public-ips` is appended to `deploy_options` (default false)
+    default: "false"
   launch_options:
     description: Additional options to pass to the Fly launch command at creation
   deploy_options:
