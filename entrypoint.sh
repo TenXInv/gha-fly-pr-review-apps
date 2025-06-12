@@ -88,7 +88,10 @@ fi
 
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
-  flyctl postgres attach "$INPUT_POSTGRES" --app "$app" || true
+  db_name=""
+  [ -n "$INPUT_POSTGRES_DB_NAME" ] && db_name="--database-name ${INPUT_POSTGRES_DB_NAME}"
+  # shellcheck disable=SC2086 # we want word splitting
+  flyctl postgres attach "$INPUT_POSTGRES" --app "$app" ${db_name} || true
 fi
 
 # Trigger the deploy of the new version.
