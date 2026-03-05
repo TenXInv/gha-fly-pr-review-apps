@@ -132,6 +132,11 @@ if [ -n "$INPUT_FLYCAST_INTO_ORG" ]; then
 
   hostname="${app}.flycast"
   url="http://${hostname}"
+elif [ "$INPUT_FLYCAST" = "true" ]; then
+  flyctl ips allocate-v6 --app "${app}" --private || true
+
+  hostname="${app}.flycast"
+  url="http://${hostname}"
 else
   hostname="$(jq -r .Hostname status.json)"
   url="https://${hostname}"
