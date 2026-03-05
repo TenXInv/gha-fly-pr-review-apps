@@ -53,5 +53,8 @@ inputs:
     description: Additional options to pass to the Fly launch command at creation
   deploy_options:
     description: If specified, attaches additional options to fly deploy command
+  flycast:
+    description: If true a flycast address in the app's organization is added
+    default: "false"
   flycast_into_org:
     description: If specified, organization to flycast the app into
