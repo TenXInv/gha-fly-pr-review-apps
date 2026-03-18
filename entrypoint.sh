@@ -90,8 +90,15 @@ fi
 if [ -n "$INPUT_POSTGRES" ]; then
   db_name=""
   [ -n "$INPUT_POSTGRES_DB_NAME" ] && db_name="--database-name ${INPUT_POSTGRES_DB_NAME}"
-  # shellcheck disable=SC2086 # we want word splitting
-  flyctl postgres attach "$INPUT_POSTGRES" --app "$app" --yes ${db_name} || true
+  # Fly doesn't provide a command to list DB attachments, so instead, we test whether
+  # the Postgres server's user list contains the review app's name (this works because
+  # when you attach an app the default username is the app's name).
+  if flyctl postgres users list -a "$INPUT_POSTGRES" | grep -q "${app}"; then
+    echo "$INPUT_POSTGRES already attached to $app"
+  else
+    # shellcheck disable=SC2086 # we want word splitting
+    flyctl postgres attach "$INPUT_POSTGRES" --app "$app" --yes ${db_name}
+  fi
 fi
 
 # Trigger the deploy of the new version.
