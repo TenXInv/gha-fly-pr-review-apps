@@ -92,8 +92,9 @@ if [ -n "$INPUT_POSTGRES" ]; then
   [ -n "$INPUT_POSTGRES_DB_NAME" ] && db_name="--database-name ${INPUT_POSTGRES_DB_NAME}"
   # Fly doesn't provide a command to list DB attachments, so instead, we test whether
   # the Postgres server's user list contains the review app's name (this works because
-  # when you attach an app the default username is the app's name).
-  if flyctl postgres users list -a "$INPUT_POSTGRES" | grep -q "${app}"; then
+  # when you attach an app the default username is the app's name - with hyphens replaced
+  # by underscores).
+  if flyctl postgres users list -a "$INPUT_POSTGRES" | grep -q "$(echo "$app" | sed 's/-/_/g')"; then
     echo "$INPUT_POSTGRES already attached to $app"
   else
     # shellcheck disable=SC2086 # we want word splitting
