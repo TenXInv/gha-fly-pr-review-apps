@@ -69,8 +69,8 @@ if ! flyctl status --app "$app"; then
       ${image_arg} \
       ${build_args} \
       ${build_secrets} \
-      $INPUT_LAUNCH_OPTIONS &&
-    set +f
+      $INPUT_LAUNCH_OPTIONS
+  set +f
 
   # Restore the original config file
   cp "$config.bak" "$config"
@@ -123,8 +123,8 @@ set -f &&
     ${build_secrets} \
     ${env_vars} \
     ${vm_sizing_options} \
-    ${deploy_options} &&
-  set +f
+    ${deploy_options}
+set +f
 
 flyctl status --app "$app" --json >status.json
 appid=$(jq -r .ID status.json)
